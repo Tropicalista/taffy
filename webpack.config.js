@@ -11,7 +11,7 @@ const config = require( './config.json' );
 // Naming and path settings
 var appName = 'app';
 var entryPoint = {
-    frontend: './assets/src/frontend/main.js',
+    //frontend: './assets/src/frontend/main.js',
     admin: './assets/src/admin/main.js',
     vendor: Object.keys(package.dependencies),
     style: './assets/less/style.less',

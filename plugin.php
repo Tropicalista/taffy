@@ -1,14 +1,14 @@
 <?php
 /*
-Plugin Name: Vue Starter Plugin
-Plugin URI: https://example.com/
-Description: A WordPress Vue.js starter plugin
-Version: 0.1
-Author: Your Name
-Author URI: https://example.com/
+Plugin Name: Taffy
+Plugin URI: https://www.tropicalseo.it
+Description: A better Affiliate Links plugin to cloak and manage your affiliate links.
+Version: 1.0.0
+Author: Francesco Pepe
+Author URI: https://www.francescopepe.com
 License: GPL2
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Text Domain: baseplugin
+Text Domain: taffy
 Domain Path: /languages
 */
 
@@ -38,237 +38,78 @@ Domain Path: /languages
  * **********************************************************************
  */
 
-// don't call the file directly
-if ( !defined( 'ABSPATH' ) ) exit;
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit; // Exit if accessed directly.
+}
+
+// Define most essential constants.
+define( 'TAFFY_VERSION', '1.0.0' );
+define( 'TAFFY_FILE', __FILE__ );
+define( 'TAFFY_PATH', dirname( TAFFY_FILE ) );
 
 /**
- * Base_Plugin class
+ * Handles plugin activation.
  *
- * @class Base_Plugin The class that holds the entire Base_Plugin plugin
+ * Throws an error if the plugin is activated on an older version than PHP 5.4.
+ *
+ * @access private
+ *
+ * @param bool $network_wide Whether to activate network-wide.
  */
-final class Base_Plugin {
+function taffy_activate_plugin( $network_wide ) {
+    if ( version_compare( PHP_VERSION, '5.4.0', '<' ) ) {
+        wp_die(
+            esc_html__( 'Site Kit requires PHP version 5.4.', 'google-site-kit' ),
+            esc_html__( 'Error Activating', 'google-site-kit' )
+        );
+    }
+    $installed = get_option( 'taffy_installed' );
 
-    /**
-     * Plugin version
-     *
-     * @var string
-     */
-    public $version = '0.1.0';
-
-    /**
-     * Holds various class instances
-     *
-     * @var array
-     */
-    private $container = array();
-
-    /**
-     * Constructor for the Base_Plugin class
-     *
-     * Sets up all the appropriate hooks and actions
-     * within our plugin.
-     */
-    public function __construct() {
-
-        $this->define_constants();
-
-        register_activation_hook( __FILE__, array( $this, 'activate' ) );
-        register_deactivation_hook( __FILE__, array( $this, 'deactivate' ) );
-
-        add_action( 'plugins_loaded', array( $this, 'init_plugin' ) );
+    if ( ! $installed ) {
+        update_option( 'taffy_installed', time() );
+        update_option( 'taffy_prefix', '' );
+        update_option( 'taffy_redirect_type', '' );
     }
 
-    /**
-     * Initializes the Base_Plugin() class
-     *
-     * Checks for an existing Base_Plugin() instance
-     * and if it doesn't find one, creates it.
-     */
-    public static function init() {
-        static $instance = false;
+    update_option( 'taffy_version', TAFFY_VERSION );
 
-        if ( ! $instance ) {
-            $instance = new Base_Plugin();
-        }
+}
 
-        return $instance;
+register_activation_hook( __FILE__, 'taffy_activate_plugin' );
+
+/**
+ * Handles plugin deactivation.
+ *
+ * @access private
+ *
+ * @param bool $network_wide Whether to deactivate network-wide.
+ */
+function taffy_deactivate_plugin( $network_wide ) {
+    if ( version_compare( PHP_VERSION, '5.4.0', '<' ) ) {
+        return;
     }
+}
 
-    /**
-     * Magic getter to bypass referencing plugin.
-     *
-     * @param $prop
-     *
-     * @return mixed
-     */
-    public function __get( $prop ) {
-        if ( array_key_exists( $prop, $this->container ) ) {
-            return $this->container[ $prop ];
-        }
+register_deactivation_hook( __FILE__, 'taffy_deactivate_plugin' );
 
-        return $this->{$prop};
+/**
+ * Handles plugin uninstall.
+ *
+ * @access private
+ */
+function taffy_uninstall_plugin() {
+    if ( version_compare( PHP_VERSION, '5.4.0', '<' ) ) {
+        return;
     }
+    delete_option('taffy_installed');
+    delete_option('taffy_prefix');
+    delete_option('taffy_redirect_type');
+    delete_option('taffy_version');
+}
 
-    /**
-     * Magic isset to bypass referencing plugin.
-     *
-     * @param $prop
-     *
-     * @return mixed
-     */
-    public function __isset( $prop ) {
-        return isset( $this->{$prop} ) || isset( $this->container[ $prop ] );
-    }
+register_uninstall_hook( __FILE__, 'taffy_uninstall_plugin' );
 
-    /**
-     * Define the constants
-     *
-     * @return void
-     */
-    public function define_constants() {
-        define( 'BASEPLUGIN_VERSION', $this->version );
-        define( 'BASEPLUGIN_FILE', __FILE__ );
-        define( 'BASEPLUGIN_PATH', dirname( BASEPLUGIN_FILE ) );
-        define( 'BASEPLUGIN_INCLUDES', BASEPLUGIN_PATH . '/includes' );
-        define( 'BASEPLUGIN_URL', plugins_url( '', BASEPLUGIN_FILE ) );
-        define( 'BASEPLUGIN_ASSETS', BASEPLUGIN_URL . '/assets' );
-    }
-
-    /**
-     * Load the plugin after all plugis are loaded
-     *
-     * @return void
-     */
-    public function init_plugin() {
-        $this->includes();
-        $this->init_hooks();
-    }
-
-    /**
-     * Placeholder for activation function
-     *
-     * Nothing being called here yet.
-     */
-    public function activate() {
-
-        $installed = get_option( 'baseplugin_installed' );
-
-        if ( ! $installed ) {
-            update_option( 'baseplugin_installed', time() );
-        }
-
-        update_option( 'baseplugin_version', BASEPLUGIN_VERSION );
-    }
-
-    /**
-     * Placeholder for deactivation function
-     *
-     * Nothing being called here yet.
-     */
-    public function deactivate() {
-
-    }
-
-    /**
-     * Include the required files
-     *
-     * @return void
-     */
-    public function includes() {
-
-        require_once BASEPLUGIN_INCLUDES . '/class-assets.php';
-
-        if ( $this->is_request( 'admin' ) ) {
-            require_once BASEPLUGIN_INCLUDES . '/class-admin.php';
-        }
-
-        if ( $this->is_request( 'frontend' ) ) {
-            require_once BASEPLUGIN_INCLUDES . '/class-frontend.php';
-        }
-
-        if ( $this->is_request( 'ajax' ) ) {
-            // require_once BASEPLUGIN_INCLUDES . '/class-ajax.php';
-        }
-
-        if ( $this->is_request( 'rest' ) ) {
-            require_once BASEPLUGIN_INCLUDES . '/class-rest-api.php';
-        }
-    }
-
-    /**
-     * Initialize the hooks
-     *
-     * @return void
-     */
-    public function init_hooks() {
-
-        add_action( 'init', array( $this, 'init_classes' ) );
-
-        // Localize our plugin
-        add_action( 'init', array( $this, 'localization_setup' ) );
-    }
-
-    /**
-     * Instantiate the required classes
-     *
-     * @return void
-     */
-    public function init_classes() {
-
-        if ( $this->is_request( 'admin' ) ) {
-            $this->container['admin'] = new App\Admin();
-        }
-
-        if ( $this->is_request( 'frontend' ) ) {
-            $this->container['frontend'] = new App\Frontend();
-        }
-
-        if ( $this->is_request( 'ajax' ) ) {
-            // $this->container['ajax'] =  new App\Ajax();
-        }
-
-        if ( $this->is_request( 'rest' ) ) {
-            $this->container['rest'] = new App\REST_API();
-        }
-
-        $this->container['assets'] = new App\Assets();
-    }
-
-    /**
-     * Initialize plugin for localization
-     *
-     * @uses load_plugin_textdomain()
-     */
-    public function localization_setup() {
-        load_plugin_textdomain( 'baseplugin', false, dirname( plugin_basename( __FILE__ ) ) . '/languages/' );
-    }
-
-    /**
-     * What type of request is this?
-     *
-     * @param  string $type admin, ajax, cron or frontend.
-     *
-     * @return bool
-     */
-    private function is_request( $type ) {
-        switch ( $type ) {
-            case 'admin' :
-                return is_admin();
-
-            case 'ajax' :
-                return defined( 'DOING_AJAX' );
-
-            case 'rest' :
-                return defined( 'REST_REQUEST' );
-
-            case 'cron' :
-                return defined( 'DOING_CRON' );
-
-            case 'frontend' :
-                return ( ! is_admin() || defined( 'DOING_AJAX' ) ) && ! defined( 'DOING_CRON' );
-        }
-    }
-
-} // Base_Plugin
-
-$baseplugin = Base_Plugin::init();
+if ( version_compare( PHP_VERSION, '5.4.0', '>=' ) ) {
+    require_once plugin_dir_path( __FILE__ ) . 'includes/loader.php';
+}

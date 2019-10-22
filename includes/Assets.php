@@ -1,5 +1,5 @@
 <?php
-namespace App;
+namespace Tropicalista\Taffy;
 
 /**
  * Scripts and Styles Class
@@ -36,7 +36,7 @@ class Assets {
         foreach ( $scripts as $handle => $script ) {
             $deps      = isset( $script['deps'] ) ? $script['deps'] : false;
             $in_footer = isset( $script['in_footer'] ) ? $script['in_footer'] : false;
-            $version   = isset( $script['version'] ) ? $script['version'] : BASEPLUGIN_VERSION;
+            $version   = isset( $script['version'] ) ? $script['version'] : TAFFY_VERSION;
 
             wp_register_script( $handle, $script['src'], $deps, $version, $in_footer );
         }
@@ -53,7 +53,7 @@ class Assets {
         foreach ( $styles as $handle => $style ) {
             $deps = isset( $style['deps'] ) ? $style['deps'] : false;
 
-            wp_register_style( $handle, $style['src'], $deps, BASEPLUGIN_VERSION );
+            wp_register_style( $handle, $style['src'], $deps, TAFFY_VERSION );
         }
     }
 
@@ -66,21 +66,15 @@ class Assets {
         $prefix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '.min' : '';
 
         $scripts = [
-            'baseplugin-vendor' => [
-                'src'       => BASEPLUGIN_ASSETS . '/js/vendor.js',
-                'version'   => filemtime( BASEPLUGIN_PATH . '/assets/js/vendor.js' ),
+            'taffy-vendor' => [
+                'src'       => TAFFY_ASSETS . '/js/vendor.js',
+                'version'   => filemtime( TAFFY_PATH . '/assets/js/vendor.js' ),
                 'in_footer' => true
             ],
-            'baseplugin-frontend' => [
-                'src'       => BASEPLUGIN_ASSETS . '/js/frontend.js',
-                'deps'      => [ 'jquery', 'baseplugin-vendor' ],
-                'version'   => filemtime( BASEPLUGIN_PATH . '/assets/js/frontend.js' ),
-                'in_footer' => true
-            ],
-            'baseplugin-admin' => [
-                'src'       => BASEPLUGIN_ASSETS . '/js/admin.js',
-                'deps'      => [ 'jquery', 'baseplugin-vendor' ],
-                'version'   => filemtime( BASEPLUGIN_PATH . '/assets/js/admin.js' ),
+            'taffy-admin' => [
+                'src'       => TAFFY_ASSETS . '/js/admin.js',
+                'deps'      => [ 'jquery', 'taffy-vendor' ],
+                'version'   => filemtime( TAFFY_PATH . '/assets/js/admin.js' ),
                 'in_footer' => true
             ]
         ];
@@ -96,14 +90,11 @@ class Assets {
     public function get_styles() {
 
         $styles = [
-            'baseplugin-style' => [
-                'src' =>  BASEPLUGIN_ASSETS . '/css/style.css'
+            'taffy-style' => [
+                'src' =>  TAFFY_ASSETS . '/css/style.css'
             ],
-            'baseplugin-frontend' => [
-                'src' =>  BASEPLUGIN_ASSETS . '/css/frontend.css'
-            ],
-            'baseplugin-admin' => [
-                'src' =>  BASEPLUGIN_ASSETS . '/css/admin.css'
+            'taffy-admin' => [
+                'src' =>  TAFFY_ASSETS . '/css/admin.css'
             ],
         ];
 
