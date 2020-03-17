@@ -7,14 +7,20 @@
             :api-mode="false"
             :per-page="perPage"
             :data-manager="dataManager"
-    		:fields="['title', 'cloaked url', 'link destination', 'redirect_type', 'edit']"
+    		:fields="['title', 'cloaked url', 'link destination', 'redirect_type', 'link type', 'edit']"
             :css="mycss.table"
     	>
         <div slot="title" slot-scope="props">
             <a :href="'#/detail/' + props.rowData.id">{{props.rowData.title.rendered}}</a>
         </div>            
+        <div slot="link type" slot-scope="props">
+            <a :href="'#/detail/' + props.rowData.id">{{props.rowData.link_type}}</a>
+        </div>            
         <div slot="cloaked url" slot-scope="props">
             <input type="text" readonly :value="props.rowData.link">
+        </div>            
+        <div slot="redirect_type" slot-scope="props">
+            {{ props.rowData.link_type == 'rebrandly' ? '301' : props.rowData.redirect_type }}
         </div>            
         <div slot="link destination" slot-scope="props">
             <input type="text" readonly :value="props.rowData.content">
@@ -45,56 +51,63 @@ export default {
     },
     watch: {
         data(newVal, oldVal) {
-          this.$refs.vuetable.refresh();
+            console.log(newVal, oldVal)
+            this.$refs.vuetable.refresh();
         }
     },
     mounted () {
             axios({
                 method:'get',
-                url:'/wp-json/wp/v2/taffylinks?page=1',
-                baseURL: '/'
+                url:'taffylinks',
+                baseURL: window.taffy.baseUrl + '/wp-json/wp/v2/'
             })
             .then(response => {
-                console.log(response)
+                //console.log(response)
                 this.data = response.data
                 this.update()
             })
             .catch(error => {
-                console.log(error)
+                //console.log(error)
             })
     },
     methods: {
         update () {
             axios({
                 method:'post',
-                url:'/wp-json/taffy/api/redirects',
-                baseURL: '/',
+                url:'/redirects',
                 data: this.data
             })
             .then(response => {
-                console.log(response)
+                //console.log(response)
             })
             .catch(error => {
-                console.log(error)
+                //console.log(error)
             })
             
         },
         delete (id) {
+            let mm = this
             axios({
                 method:'delete',
-                url:'/wp-json/wp/v2/taffylinks/' + id,
-                baseURL: '/',
+                url:'/taffylinks/' + id,
+                baseURL: window.taffy.baseUrl + '/wp-json/wp/v2/'
             })
             .then(response => {
-                for(var i = this.data.length - 1; i >= 0; i--) {
-                    if(this.data[i].id === id) {
-                       this.data.splice(i, 1);
+                mm.data.forEach( (value, index) => {
+                    if(value.id === id) {
+                        mm.data.splice(index, 1)
+                        this.$nextTick( () => {
+                            // do something cool
+                            mm.$refs.vuetable.refresh();
+                        })                        
                     }
+                })
+                if(!mm.data.length){
+                    mm.data = []
                 }
-                console.log(response)
             })
             .catch(error => {
-                console.log(error)
+                //console.log(error)
             })
         },
         onActionClicked(action, data) {
@@ -118,7 +131,7 @@ export default {
 
           // sortOrder can be empty, so we have to check for that as well
           if (sortOrder.length > 0) {
-            console.log("orderBy:", sortOrder[0].sortField, sortOrder[0].direction);
+            //console.log("orderBy:", sortOrder[0].sortField, sortOrder[0].direction);
             const sortBy = (key) => {
               return (a, b) => (a[key] > b[key]) ? 1 : ((b[key] > a[key]) ? -1 : 0);
             };
@@ -136,7 +149,7 @@ export default {
             this.perPage
           );
 
-          console.log('pagination:', pagination)
+          //console.log('pagination:', pagination)
           let from = pagination.from - 1;
           let to = from + this.perPage;
 

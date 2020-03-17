@@ -1,1 +1,1 @@
-default,http://myplugintest.com
+default,http://localhost/wordpress,307

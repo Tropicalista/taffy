@@ -2,9 +2,9 @@ import Vue from 'vue'
 import App from './App.vue'
 import router from './router'
 import menuFix from './utils/admin-menu-fix'
+import store from './store'
 
 import axios from 'axios'
-import * as Papa from 'papaparse'
 
 window.axios = axios 
 
@@ -19,17 +19,26 @@ axios.defaults.headers.common = {
 	errorResponseHandler
 );*/
 
-axios.defaults.baseURL = '/wp-json/taffy/api'
+axios.defaults.baseURL = window.taffy.baseUrl + '/wp-json/taffy/api'
 
 
 Vue.config.productionTip = false
 
-/* eslint-disable no-new */
-new Vue({
-    el: '#vue-admin-app',
-    router,
-    render: h => h(App)
-});
+	axios
+		.get('/config')
+		.then(r => r.data)
+		.then(config => {
+			store.commit('setConfig', config)
+
+			/* eslint-disable no-new */
+			new Vue({
+			    el: '#vue-admin-app',
+			    router,
+			    store,
+			    render: h => h(App)
+			});
+
+		})
 
 
 // fix the admin menu for the slug "vue-app"

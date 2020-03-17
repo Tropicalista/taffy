@@ -11,7 +11,7 @@ class Redirects {
     protected $redirects_file;
 
     public function __construct() {
-        $this->redirects_file = get_home_path() . get_option( 'taffy_prefix', '' ) . '/redirects.txt';
+        $this->redirects_file = get_home_path() . get_option( 'taffy_prefix', 'go' ) . '/redirects.txt';
     }
 
     public function exists() {
@@ -24,6 +24,9 @@ class Redirects {
 
 
     public function read() {
+        if(!$this->exists()){
+            $this->write(array());
+        }
         /* Map Rows and Loop Through Them */
         $rows   = array_map('str_getcsv', file( $this->redirects_file ));
 
@@ -43,18 +46,29 @@ class Redirects {
             $row = [ $row['slug'], $row['content'], $row['redirect_type'] ];
             $csv .= implode(',', $row) . "\n";
         }
-        $this->write_to_disk($csv);
+        return $this->write_to_disk($csv);
     }
 
     public function update( $data ) {
         $csv = '';
         $f = $this->read();
-        array_push($f, [ $data['slug'], $data['content'] ]);
-        foreach($f as $row) {
-            $csv .= implode(',', $row) . "\n";
+
+        // Search for duplicate
+        $result = array_search($data['slug'],array_column($f, 0));
+
+        if( !empty($result) ){
+            $f[$result] = $data;
+        }else{
+            array_push($f, [ $data['slug'], $data['content'], $data['redirect_type'] ]);
         }
 
+        $result = array_unique($f, SORT_REGULAR);
+
+        foreach($result as $row) {
+            $csv .= implode(',', $row) . "\n";
+        }
         $this->write_to_disk($csv);
+        return $csv;
     }
 
     public function write_to_disk($data) {
@@ -62,7 +76,7 @@ class Redirects {
         $f = fopen( $this->redirects_file, 'w+' );
         fwrite( $f, rtrim($data) );            
         fclose($f);
-
+        return $data;
     }
 
 }

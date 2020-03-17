@@ -8,26 +8,21 @@ require_once(ABSPATH . "wp-admin" . '/includes/file.php');
  */
 class Robots {
 
-    protected $robots;
+    protected $robots_file;
 
     public function __construct() {
-        $this->robots = get_home_path() . 'robots.txt';
+        $this->robots_file = get_home_path() . 'robots.txt';
     }
 
-    public function create($path) {
-
-        if( 'wp-admin' == $path || 'wp-content' == $path || 'wp-includes' == $path ){
-            return 'You\'re not allowed to create those folders!';
-        }
-
+    public function create( $prefix ) {
         $content = $this->read_to_Array();
-        $new_content = $this->modify( $content, $path );
-        $this->create_folder( $path );
+        $new_content = $this->modify( $content, $prefix );
+
         return $this->write($new_content);
     }
 
     public function exists() {
-        return file_exists( $this->robots );
+        return file_exists( $this->robots_file );
     }
 
     public function is_home_writeable() {
@@ -43,7 +38,7 @@ class Robots {
             do_robots();
             $robots_content = ob_get_clean();
         }else{
-            $robots_content = file_get_contents( $this->robots );
+            $robots_content = file_get_contents( $this->robots_file );
 
         }
         return $robots_content;
@@ -63,8 +58,8 @@ class Robots {
         return $robots_content;
     }
 
-    public function modify( $content, $path ) {
-        $myRule = 'Disallow: /' . $path . '/';
+    public function modify( $content, $prefix ) {
+        $myRule = 'Disallow: /' . $prefix . '/';
         // check if rule is already present
         $check = false;
 
@@ -75,7 +70,7 @@ class Robots {
         }
         if(!$check){
             // Add comment to robots
-            array_push($content, '# created by Taffy ' . ' prefix: ' . $path );
+            array_push($content, '# created by Taffy ' . ' prefix: ' . $prefix );
             array_push($content, $myRule);
         }
 
@@ -85,45 +80,12 @@ class Robots {
     public function write($content) {
         $content = implode("\n", $content);
 
-        if(!$this->exists()){
-            $f = fopen( $this->robots, 'x' );
-            fwrite( $f, $content );            
-        }
-        if ( is_writable( $this->robots ) ) {
-            $f = fopen( $this->robots, 'w+' );
+        $f = fopen( $this->robots_file, 'w+' );
 
-            fwrite( $f, $content );
-            fclose( $f );
-        }else{
-            return 'robots.txt is not writeable';
-        }
-        return 'robots.txt created.';
-    }
-
-    public function create_folder( $path ) {
-        $taffy_folder = get_home_path() . $path;
-        if (!file_exists( $taffy_folder )) {
-            mkdir( $taffy_folder, 0777, true );
-        }
-        $this->add_default();
-        $this->copy_files( $path, $taffy_folder );
-    }
-
-    public function copy_files( $path_name, $taffy_folder ) {
-
-        foreach (new \DirectoryIterator( TAFFY_PATH . '/presets' ) as $fileInfo) {
-            if (!$fileInfo->isDot()) {
-                copy( $fileInfo->getPathname(), $taffy_folder . '/' . $fileInfo->getFilename() );
-            }
-        }
-
-    }
-
-    public function add_default () {
-        $f = fopen( TAFFY_PATH . '/presets/redirects.txt', 'w+' );
-
-        fwrite( $f, 'default,' . get_home_url() );
+        fwrite( $f, $content );
         fclose( $f );
+
+        return $content;
     }
 
 }

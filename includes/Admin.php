@@ -8,8 +8,13 @@ class Admin {
 
     public function __construct() {
         //$this->create_CPT();
-        $this->my_book_cpt();
+        $this->my_cpt();
+        $this->robots = new \Tropicalista\Taffy\MyCustomFields();
+        $this->settings = new \Tropicalista\Taffy\Settings();
         add_action( 'admin_menu', [ $this, 'admin_menu' ] );
+        add_filter( 'post_type_link', [ $this, 'taffylink_external_permalink'], 10, 2 );
+        add_action('admin_enqueue_scripts', [ $this, 'my_admin_enqueue_scripts'] );
+ 
     }
 
     /**
@@ -69,14 +74,18 @@ class Admin {
     ?>
       <script type="text/javascript">
               var _nonce = "<?php echo wp_create_nonce( 'wp_rest' ); ?>";
+              window.taffy = {
+                baseUrl: '<?php echo get_home_url(); ?>'
+              }
       </script>
+      <style type="text/css">[v-cloak] { display:none; }</style>
     <?php
-        echo '<div class="wrap"><div id="vue-admin-app"></div></div>';
+        echo '<div class="wrap"><div id="vue-admin-app" v-cloak></div></div>';
     }
 
-    function my_book_cpt() {
+    function my_cpt() {
 
-      $prefix = get_option( 'taffy_prefix' , '' );
+      $prefix = get_option( 'taffy_prefix' , 'go' );
 
       $labels = array(
         'name'               => _x( 'Affiliate Links', 'post type general name', 'taffy' ),
@@ -113,12 +122,37 @@ class Admin {
         'query_var'          => true,
         'rest_base'          => 'taffylinks',
         'rest_controller_class' => 'WP_REST_Posts_Controller',
-        'supports'           => array( 'title', 'editor' )
+        'supports'           => array( 'title', 'custom-fields' )
       );
 
 
       register_post_type( 'taffylink', $args );
+
     }
 
+    function taffylink_external_permalink( $link, $post ){
+
+        $meta = get_post_meta( $post->ID, 'link_type', TRUE );
+
+        if( 'rebrandly' == $meta ){
+          return $post->post_content;
+        }
+        return $link;
+    }
+
+    function custom_rewrite( $prefix, $c ) {
+
+      return array( 'slug' => $prefix );
+
+    }
+
+    function my_admin_enqueue_scripts() {
+      switch(get_post_type()) {
+        case 'taffylink':
+          wp_dequeue_script('autosave');
+          wp_deregister_script( 'postbox' );
+          break;
+      }
+    }
 
 }

@@ -9,7 +9,7 @@
                 <div class="pure-control-group">
                     <label for="foo">robots.txt</label>
                     <textarea class="pure-input-1-2" placeholder="Your robots.txt content" v-model="robots" rows="15"></textarea>
-                    <span class="pure-form-message-inline">This is the content of your robots.txt.</span>
+                    <span class="pure-form-message-inline">This is the content of your <a :href="robotsUrl" target="_blank">robots.txt</a>.</span>
                 </div>
 
                 <div v-show="false">
@@ -29,7 +29,7 @@ export default {
     props: ['robots'],
     data () {
         return {
-
+            robotsUrl: window.taffy.baseUrl + '/robots.txt'
         };
     },
     mounted () {
